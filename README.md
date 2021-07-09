@@ -5,6 +5,7 @@
 
 用户脚本：https://biuuu.github.io/YSSJPD/index.user.js
 
+原神B站直播间：https://live.bilibili.com/21987615
 ## 使用
 1. 建议使用 Chrome 或新 Edge，首先安装 [Violentmonkey](https://violentmonkey.github.io/get-it) 扩展或者 [Tampermonkey](https://www.tampermonkey.net/) 扩展
 2. 点击脚本链接 https://biuuu.github.io/YSSJPD/index.user.js ，没有问题的话，Violentmonkey 或 Tampermonkey 会弹出安装提示，直接安装即可。

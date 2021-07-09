@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        原神世界频道
 // @namespace   https://github.com/biuuu/YSSJPD
-// @match       https://live.bilibili.com/21987615
+// @match       https://live.bilibili.com/*
 // @icon        https://biuuu.github.io/YSSJPD/256x256.png
 // @grant       none
 // @run-at      document-body
-// @version     1.1
+// @version     1.2
 // @author      芭芭拉
 // @description 这里是原神世界频道，你可以在这里讨论原神哦 https://live.bilibili.com/21987615
 // @updateURL   https://biuuu.github.io/YSSJPD/index.user.js
