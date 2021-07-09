@@ -5,36 +5,38 @@
 // @icon        https://biuuu.github.io/YSSJPD/256x256.png
 // @grant       none
 // @run-at      document-body
-// @version     1.2
+// @version     1.3
 // @author      芭芭拉
 // @description 这里是原神世界频道，你可以在这里讨论原神哦 https://live.bilibili.com/21987615
 // @updateURL   https://biuuu.github.io/YSSJPD/index.user.js
 // @supportURL  https://github.com/biuuu/YSSJPD/issues
 // ==/UserScript==
 
-const manifest = {
-  "name": "原神世界频道",
-  "short_name": "原神世界频道",
-  "start_url": "https://live.bilibili.com/21987615",
-  "display": "fullscreen",
-  "background_color": "#fff",
-  "theme_color": "#00bcd4",
-  "description": "这里是原神世界频道，你可以在这里讨论原神哦",
-  "icons": [
-    {
-      "src": "https://biuuu.github.io/YSSJPD/256x256.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    }
-  ],
+if (location.pathname === '/21987615') {
+  const manifest = {
+    "name": "原神世界频道",
+    "short_name": "原神世界频道",
+    "start_url": "https://live.bilibili.com/21987615",
+    "display": "fullscreen",
+    "background_color": "#fff",
+    "theme_color": "#00bcd4",
+    "description": "这里是原神世界频道，你可以在这里讨论原神哦",
+    "icons": [
+      {
+        "src": "https://biuuu.github.io/YSSJPD/256x256.png",
+        "sizes": "256x256",
+        "type": "image/png"
+      }
+    ],
+  }
+
+  document.title = '原神世界频道'
+
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], {type : 'application/json'})
+  const objectURL = URL.createObjectURL(blob)
+
+  document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${objectURL}">`)
 }
-
-document.title = '原神世界频道'
-
-const blob = new Blob([JSON.stringify(manifest, null, 2)], {type : 'application/json'})
-const objectURL = URL.createObjectURL(blob)
-
-document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${objectURL}">`)
 
 document.head.insertAdjacentHTML('beforeend', `
 <style>
