@@ -2,9 +2,10 @@
 // @name        原神世界频道
 // @namespace   https://github.com/biuuu/YSSJPD
 // @match       https://live.bilibili.com/21987615
+// @icon        https://biuuu.github.io/YSSJPD/256x256.png
 // @grant       none
 // @run-at      document-body
-// @version     1.0
+// @version     1.1
 // @author      芭芭拉
 // @description 这里是原神世界频道，你可以在这里讨论原神哦 https://live.bilibili.com/21987615
 // ==/UserScript==
@@ -19,8 +20,8 @@ const manifest = {
   "description": "这里是原神世界频道，你可以在这里讨论原神哦",
   "icons": [
     {
-      "src": "http://i2.hdslb.com/bfs/face/86a6575eb0c9116df498a4baf85daaf9a3611310.jpg@192w_192h.png",
-      "sizes": "192x192",
+      "src": "https://biuuu.github.io/YSSJPD/256x256.png",
+      "sizes": "256x256",
       "type": "image/png"
     }
   ],
