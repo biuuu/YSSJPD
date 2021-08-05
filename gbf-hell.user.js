@@ -7,7 +7,7 @@
 // @author       biuuu
 // @match        *://game.granbluefantasy.jp/*
 // @match        *://gbf.game.mbga.jp/*
-// @updateURL   https://biuuu.github.io/YSSJPD/gbf-hell.user.js
+// @updateURL    https://blhx.shiny.fun/gbf-hell.user.js
 // @run-at       document-end
 // @grant        GM_notification
 // ==/UserScript==
