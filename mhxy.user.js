@@ -5,8 +5,8 @@
 // @icon        https://biuuu.github.io/YSSJPD/256x256.png
 // @grant       none
 // @run-at      document-body
-// @version     1.3
-// @author      芭芭拉
+// @version     1.4
+// @author      心海
 // @description https://xyh5.163.com/game/?bg=false
 // @updateURL   https://biuuu.github.io/YSSJPD/mhxy.user.js
 // @supportURL  https://github.com/biuuu/YSSJPD/issues
@@ -20,10 +20,10 @@ if (true) {
     "display": "fullscreen",
     "background_color": "#fff",
     "theme_color": "#00bcd4",
-    "description": "这里是梦幻西游网页版哦",
+    "description": "梦幻西游网页版",
     "icons": [
       {
-        "src": "https://biuuu.github.io/YSSJPD/mhxy.ico",
+        "src": "https://biuuu.github.io/YSSJPD/mhxy.png",
         "sizes": "64x64",
         "type": "image/vnd.microsoft.icon"
       }
