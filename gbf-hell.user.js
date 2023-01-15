@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想出HELL了
 // @namespace    https://gist.github.com/biuuu/gbf-hell
-// @version      1.0.3
+// @version      1.0.4
 // @description  提醒碧蓝幻想出HELL了
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
