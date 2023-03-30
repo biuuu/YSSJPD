@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         自动复制救援码
 // @namespace    https://gist.github.com/biuuu
-// @version      0.5
+// @version      0.6
 // @description  自动复制最左边第一个救援码，调整顺序后刷新网页生效
 // @author       biuuu
 // @include      /^https?:\/\/gbf\.life.*$/
@@ -46,16 +46,14 @@
   }
 
   const clickNodeEriri = (node) => {
-    const nodeId = node.querySelector('p.id')
-    const nodeA = node.tagName === 'A' ? node : node.querySelector('a')
+    const nodeId = node.querySelector('.tweet-battle-id')
     if (!nodeId) return
     clearTimeout(timer)
     timer = setTimeout(() => {
       lastid = nodeId.textContent
-      nodeA.dataset.copied = true
-      node.setAttribute('copied', 'true')
-      newTag(node)
       GM_setClipboard(lastid, 'text')
+      node.querySelector('button').classList.add('tweet-copied')
+      newTag(node)
     }, INTERVAL)
   }
 
@@ -92,7 +90,7 @@
           Array.from(addedNodes).reverse().forEach(node => {
             if (node.nodeType !== Node.ELEMENT_NODE) return
             if (isEriri) {
-              if (node.classList.contains('req')) {
+              if (node.classList.contains('w-full')) {
                 clickNodeEriri(node)
               }
             } else if (node?.tagName?.toLowerCase() === 'mat-card') {
@@ -114,7 +112,7 @@
 
     let selector = '.mdl-list.gbfrf-tweets'
     if (isEriri) {
-      selector = '#center .body'
+      selector = '#gbs-main'
     } else if (isGbfLife) {
       selector = '.list-group'
     } else if (isOgres) {
@@ -139,7 +137,7 @@
   }
 
   const main = () => {
-    setTimeout(start, 1000)
+    setTimeout(start, 2000)
   }
 
   if (window.unsafeWindow) {
