@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想打完了
 // @namespace    https://gist.github.com/biuuu/gbf-dwl
-// @version      0.3.0
+// @version      0.3.1
 // @description  可以发通知提醒碧蓝幻想副本已结束
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -33,7 +33,7 @@
       if (!eventOn) {
         eventOn = true
         $(document).ajaxSuccess(function(event, xhr, settings, data) {
-          if (/\/result(multi)?\/data\/\d+/.test(settings.url)) {
+          if (/\/result(multi)?\/content\/index\/\d+/.test(settings.url)) {
             send('打完了')
           }
         })
