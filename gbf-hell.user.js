@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         碧蓝幻想出HELL了
 // @namespace    https://gist.github.com/biuuu/gbf-hell
-// @version      1.0.5
+// @version      1.1.0
 // @description  提醒碧蓝幻想出HELL了
 // @icon         http://game.granbluefantasy.jp/favicon.ico
 // @author       biuuu
@@ -38,10 +38,10 @@
       if (!eventOn) {
         eventOn = true
         $(document).ajaxSuccess(function(event, xhr, settings, data) {
-          if (/\/result(multi)?\/data\/\d+/.test(settings.url)) {
-            if (data.appearance.is_quest) {
+          if (/\/result(multi)?\/content\/index\/\d+/.test(settings.url)) {
+            if (data?.option?.result_data?.appearance?.is_quest) {
               send('出hell了')
-            } else if (data.replicard.has_occurred_event) {
+            } else if (data?.option?.result_data?.replicard?.has_occurred_event) {
               send('出沙盒宝箱怪/buff怪了')
             }
           }
