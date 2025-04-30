@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.2
+// @version     1.3
 // @author      lvlvl
 // ==/UserScript==
 
@@ -246,7 +246,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 #m_threads .forumbox>tbody a.topic {
-  text-decoration: auto !important;
+  text-decoration: none !important;
 }
 
 .indexblock .catenew .cr,
@@ -265,7 +265,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   font-weight: normal;
   color: #591804;
   line-height: 1.2;
-  text-decoration: auto !important;
+  text-decoration: none !important;
 }
 
 .indexblock .catenew p {
@@ -321,7 +321,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
       delegationParentSelector: '#m_threads',        // 委托事件监听器的父元素
       itemSelector: '.forumbox > tbody',             // 可点击的容器项 (相对于父元素或全局均可，只要能在父元素内唯一定位)
       targetLinkSelector: 'a.topic',                 // 容器项内部的目标链接
-      interactiveElementsSelector: 'a, button, input, select, textarea, [onclick]', // 容器项内忽略跳转的交互元素
+      interactiveElementsSelector: 'button, input, select, textarea, [onclick]', // 容器项内忽略跳转的交互元素
       cssHighlightSelector: '#m_threads .forumbox > tbody' // 用于 CSS 高亮的完整选择器
     },
     {
@@ -329,7 +329,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
       delegationParentSelector: '#indexBlockLeft',
       itemSelector: '.indexblock',
       targetLinkSelector: 'a.uitxt3',
-      interactiveElementsSelector: 'a, button, input, select, textarea, [onclick]',
+      interactiveElementsSelector: 'button, input, select, textarea, [onclick]',
       cssHighlightSelector: '#indexBlockLeft .indexblock'
     }
     // 如果有更多区域，可以在这里添加更多配置对象
