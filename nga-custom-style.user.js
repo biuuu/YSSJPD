@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.4
+// @version     1.5
 // @author      lvlvl
 // ==/UserScript==
 
@@ -47,7 +47,7 @@ body {
 
 .topicrow .c2 {
   padding: 1em 1em !important;
-  border-bottom: 1px solid hsl(0deg 0% 0% / 20%) !important;
+  border-bottom: 1px solid hsl(0deg 0% 0% / 10%) !important;
 }
 
 .postrow .c2 {
