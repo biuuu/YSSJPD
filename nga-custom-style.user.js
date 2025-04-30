@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.5
+// @version     1.6
 // @author      lvlvl
 // ==/UserScript==
 
@@ -30,10 +30,6 @@
 
 .posterInfoLine {
   margin: 0 !important;
-}
-
-body {
-  background: #fef9e6;
 }
 
 .row2 .c2 .posterInfoLine,
@@ -286,6 +282,11 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   height: 100%;
   padding-right: 8px;
   box-sizing: border-box;
+}
+
+.catenew, .cateblock, .forumbox {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 #m_cate5>.w100>div:first-of-type>a {
