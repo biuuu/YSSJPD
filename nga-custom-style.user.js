@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.6
+// @version     1.5
 // @author      lvlvl
 // ==/UserScript==
 
@@ -26,10 +26,6 @@
   display: flex;
   flex-direction: column-reverse;
   gap: 1em;
-}
-
-.posterInfoLine {
-  margin: 0 !important;
 }
 
 .row2 .c2 .posterInfoLine,
@@ -55,6 +51,7 @@
   padding: 0;
   display: flex;
   align-items: center;
+  font-size: 18px;
 }
 
 .module_wrap {
@@ -81,7 +78,7 @@
   min-width: auto !important;
   padding: 0 !important;
   color: #A9A9A9 !important;
-  font-size: 19px !important;
+  font-size: inherit !important;
   font-weight: normal !important;
   background: transparent !important;
   font-family: PingFang SC, HarmonyOS_Regular, Helvetica Neue, Microsoft YaHei, sans-serif !important;
@@ -89,7 +86,7 @@
 
 tr:not(.set_topic) .posterInfoLine .replies::after {
   content: '回复';
-  margin-left: 2px;
+  margin-left: 4px;
 }
 
 .c2>.replies {
@@ -107,9 +104,9 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .author,
 .postrow .userlink,
 .postrow .block_txt:not(.contentFullWidthButton, .block_txt_c0, .block_txt_c2, .block_txt_c3, .vertmod) {
-  color: #efb973 !important;
+  color: inherit !important;
   font-weight: normal !important;
-  font-size: 22px !important;
+  font-size: inherit !important;
   margin-top: 6px;
 }
 
@@ -121,19 +118,22 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   padding: 0 !important;
 }
 
+#mainmenu {
+  margin-top: 0 !important;
+}
+
+.postrow .posterInfoLine .userlink {
+  color: #efb973 !important;
+  font-size: 20px !important;
+}
+
 .postrow .avatar {
   box-shadow: none !important;
   border-radius: 50% !important;
-  margin: 0 1em 0 0 !important;
+  margin: 0 1em 0 1em !important;
   width: 4em;
   height: 4em;
-}
-
-.postrow .avatar+img {
-  position: relative;
-  top: calc(-100% + 2px);
-  left: -4px;
-  margin-left: 0 !important;
+  object-fit: cover;
 }
 
 .postrow .c2 {
@@ -151,6 +151,10 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   order: 2;
   border-top: 1px solid #00000015 !important;
   display: flex;
+}
+
+.postrow .posterInfoLine {
+  margin: 0 -1em !important;
 }
 
 .posterInfoLineB .postbtmb {
@@ -182,11 +186,26 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .postInfo a.stxt {
   position: absolute;
   right: 1em;
-  top: 1.6em;
+  top: 1.4em;
+  font-size: 20px;
 }
 
 .postrow .c2>.postInfo+span>br {
   display: none;
+}
+
+.postrow .c2 .posterInfoLine > .right:first-child + div {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  position: relative;
+}
+
+.postrow .c2 .posterInfoLine > .right:first-child + div > .avatar + img {
+  margin-left: 0 !important;
+  position: absolute;
+  left: 10px;
+  top: -6px;
 }
 
 .postrow .postInfo+span {
@@ -198,9 +217,9 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: none;
 }
 
-.posterInfoLineB+span {
-  border-top: 1px solid #00000015;
-  margin-top: 0.5em !important;
+.forumbox .postrow .postcontent img:not(img[class]) {
+  max-width: 100% !important;
+  min-width: 320px !important;
 }
 
 .posterInfoLineB+span .postbodysubtitle {
@@ -274,6 +293,10 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: none;
 }
 
+.author .silver {
+  color: inherit !important;
+}
+
 .indexblock .catenew .b {
   display: flex;
   flex-direction: column;
@@ -287,6 +310,16 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .catenew, .cateblock, .forumbox {
   border: none !important;
   box-shadow: none !important;
+}
+
+.forumbox .postrow .c2 .subtitle {
+  padding: 0.5em 0;
+  margin: 0;
+  border-top: 1px solid #00000015;
+}
+
+.postcontent .userlink {
+  color: #6a6a6a !important
 }
 
 #m_cate5>.w100>div:first-of-type>a {
@@ -328,7 +361,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
     {
       id: 'indexBlocks',
       delegationParentSelector: '#indexBlockLeft',
-      itemSelector: '.indexblock',
+      itemSelector: '.indexblock .togcheckblock',
       targetLinkSelector: 'a.uitxt3', // THE link we always want to navigate to
       interactiveElementsSelector: 'button, input, select, textarea, [onclick]:not(a)', // Exclude 'a' here
       cssHighlightSelector: '#indexBlockLeft .indexblock'
