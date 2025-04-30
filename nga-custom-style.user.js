@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.1
+// @version     1.2
 // @author      lvlvl
 // ==/UserScript==
 
@@ -265,6 +265,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   font-weight: normal;
   color: #591804;
   line-height: 1.2;
+  text-decoration: auto !important;
 }
 
 .indexblock .catenew p {
@@ -313,87 +314,118 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 `)
 
   // --- 配置 ---
-  const delegationParentSelector = '#m_threads';
-  const tbodySelector = '.forumbox > tbody';
-  const targetLinkSelector = 'a.topic';
-  const interactiveElementsSelector = 'a, button, input, select, textarea, [onclick]';
-
-  // --- 核心：事件处理函数 ---
-  function handleClick(event) {
-    // `this` 在这里会是 delegationParent
-    const tappedTbody = event.target.closest(tbodySelector);
-
-    // 确保点击发生在目标 tbody 内，并且该 tbody 在委托父元素下
-    if (!tappedTbody || !this.contains(tappedTbody)) {
-      return;
+  // 定义需要处理的区域及其选择器
+  const targetsConfig = [
+    {
+      id: 'forumThreads', // 唯一标识符，用于调试和标记
+      delegationParentSelector: '#m_threads',        // 委托事件监听器的父元素
+      itemSelector: '.forumbox > tbody',             // 可点击的容器项 (相对于父元素或全局均可，只要能在父元素内唯一定位)
+      targetLinkSelector: 'a.topic',                 // 容器项内部的目标链接
+      interactiveElementsSelector: 'a, button, input, select, textarea, [onclick]', // 容器项内忽略跳转的交互元素
+      cssHighlightSelector: '#m_threads .forumbox > tbody' // 用于 CSS 高亮的完整选择器
+    },
+    {
+      id: 'indexBlocks',
+      delegationParentSelector: '#indexBlockLeft',
+      itemSelector: '.indexblock',
+      targetLinkSelector: 'a.uitxt3',
+      interactiveElementsSelector: 'a, button, input, select, textarea, [onclick]',
+      cssHighlightSelector: '#indexBlockLeft .indexblock'
     }
+    // 如果有更多区域，可以在这里添加更多配置对象
+  ];
 
-    const link = tappedTbody.querySelector(targetLinkSelector);
-    if (!link || !link.href) {
-      return;
-    }
+  // --- 通用：创建针对特定配置的点击处理函数 ---
+  function createClickHandler(config) {
+    return function handleClick(event) {
+      // `this` 指向附加监听器的 delegationParent
+      const tappedItem = event.target.closest(config.itemSelector);
 
-    const clickedInteractiveElement = event.target.closest(interactiveElementsSelector);
-    if (clickedInteractiveElement && tappedTbody.contains(clickedInteractiveElement)) {
-      return; // 点击的是内部可交互元素，执行默认行为
-    }
+      // 确保点击发生在目标 item 内，并且该 item 在委托父元素下
+      if (!tappedItem || !this.contains(tappedItem)) {
+        return;
+      }
 
-    // 执行跳转
-    // console.log('TBody background clicked via delegation, navigating to:', link.href);
-    window.location.href = link.href;
+      const link = tappedItem.querySelector(config.targetLinkSelector);
+      if (!link || !link.href) {
+        // console.log(`[${config.id}] No valid target link found in tapped item:`, tappedItem);
+        return;
+      }
+
+      const clickedInteractiveElement = event.target.closest(config.interactiveElementsSelector);
+      if (clickedInteractiveElement && tappedItem.contains(clickedInteractiveElement)) {
+        // console.log(`[${config.id}] Clicked on an interactive element inside item, allowing default behavior.`);
+        return; // 点击的是内部可交互元素，执行默认行为
+      }
+
+      // 执行跳转
+      // console.log(`[${config.id}] Item background clicked via delegation on ${this.id || this.className}, navigating to:`, link.href);
+      window.location.href = link.href;
+    };
   }
 
-  // --- 查找并附加监听器的函数 ---
-  function attachListener(parentEl) {
-    if (parentEl && !parentEl.dataset.tapDelegationAttached) {
-      console.log('Attaching click listener to:', parentEl);
-      parentEl.addEventListener('click', handleClick, false);
-      parentEl.dataset.tapDelegationAttached = 'true'; // 标记已附加，防止重复
-      return true; // 表示成功附加
-    }
-    return false; // 表示未附加 (元素不存在或已附加)
-  }
+  // --- 通用：查找父元素并附加监听器，如果父元素不存在则设置观察器 ---
+  function setupTapDelegation(config) {
+    const parentDataAttribute = `data-tap-delegation-${config.id}-attached`;
 
-  // --- 初始化逻辑 ---
-  function initialize() {
+    // 尝试附加监听器
+    function attachListener(parentEl) {
+      if (parentEl && !parentEl.hasAttribute(parentDataAttribute)) {
+        console.log(`[${config.id}] Attaching click listener to:`, parentEl);
+        const handler = createClickHandler(config);
+        parentEl.addEventListener('click', handler, false);
+        parentEl.setAttribute(parentDataAttribute, 'true'); // 标记已附加
+        return true;
+      }
+      return false;
+    }
+
     // 1. 尝试立即查找父元素
-    const immediateParent = document.querySelector(delegationParentSelector);
+    const immediateParent = document.querySelector(config.delegationParentSelector);
     if (attachListener(immediateParent)) {
-      console.log('Tap enhancement initialized immediately.');
-      return; // 成功找到并附加，完成初始化
+      console.log(`[${config.id}] Tap enhancement initialized immediately.`);
+      return; // 成功找到并附加，完成此配置的初始化
     }
 
     // 2. 如果父元素尚未存在，则使用 MutationObserver 等待它出现
-    console.log('Delegation parent not found immediately. Setting up observer...');
+    console.log(`[${config.id}] Delegation parent "${config.delegationParentSelector}" not found. Setting up observer...`);
     const observer = new MutationObserver((mutationsList, obs) => {
+      // 优化：只在添加了节点时检查
+      let parentFound = false;
       for (const mutation of mutationsList) {
         if (mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // 检查添加的节点本身是否是目标父元素
-              if (node.matches(delegationParentSelector)) {
-                console.log('Delegation parent appeared:', node);
-                if (attachListener(node)) {
-                  obs.disconnect(); // 成功附加监听器后，停止观察
-                  console.log('Observer disconnected.');
-                  return; // 完成初始化
-                }
-              }
-              // 检查添加的节点内部是否包含目标父元素 (不太可能，但为了完整性)
-              else if (typeof node.querySelector === 'function') {
-                const foundParent = node.querySelector(delegationParentSelector);
-                if (foundParent) {
-                  console.log('Delegation parent found within added node:', foundParent);
-                  if (attachListener(foundParent)) {
-                    obs.disconnect(); // 成功附加监听器后，停止观察
-                    console.log('Observer disconnected.');
-                    return; // 完成初始化
-                  }
-                }
-              }
+          // 尝试直接查找父元素，因为添加的节点可能是父元素本身或包含父元素的容器
+          const parentInDoc = document.querySelector(config.delegationParentSelector);
+          if (parentInDoc && !parentInDoc.hasAttribute(parentDataAttribute)) {
+            // console.log(`[${config.id}] Delegation parent found after mutation:`, parentInDoc);
+            if (attachListener(parentInDoc)) {
+              parentFound = true;
+              break; // 找到并处理了，跳出内层循环
             }
           }
+          // 如果直接查找失败 (例如父元素在 addedNodes 的更深层级)，可以遍历 addedNodes，但效率较低
+          /*
+          for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                  const potentialParent = node.matches(config.delegationParentSelector) ? node : node.querySelector(config.delegationParentSelector);
+                  if (potentialParent && !potentialParent.hasAttribute(parentDataAttribute)) {
+                      // console.log(`[${config.id}] Delegation parent found within added node:`, potentialParent);
+                      if (attachListener(potentialParent)) {
+                          parentFound = true;
+                          break; // 跳出 addedNodes 循环
+                      }
+                  }
+              }
+          }
+          */
         }
+        if (parentFound) break; // 跳出 mutationsList 循环
+      }
+
+
+      if (parentFound) {
+        obs.disconnect(); // 成功附加监听器后，停止观察
+        console.log(`[${config.id}] Observer disconnected.`);
       }
     });
 
@@ -403,44 +435,11 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
       subtree: true
     });
 
-    console.log('Observer waiting for delegation parent...');
+    console.log(`[${config.id}] Observer waiting for delegation parent "${config.delegationParentSelector}"...`);
   }
 
-  // --- 执行初始化 ---
-  // 即使设置了 @run-at document-idle，也可能需要一点点延迟来确保某些框架初始化完毕
-  // 但 MutationObserver 本身可以处理延迟，所以直接调用通常没问题
-  initialize();
-
+  // --- 对每个配置执行初始化 ---
+  targetsConfig.forEach(config => {
+    setupTapDelegation(config);
+  });
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
