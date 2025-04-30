@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.3
+// @version     1.4
 // @author      lvlvl
 // ==/UserScript==
 
@@ -314,127 +314,177 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 `)
 
   // --- 配置 ---
-  // 定义需要处理的区域及其选择器
   const targetsConfig = [
     {
-      id: 'forumThreads', // 唯一标识符，用于调试和标记
-      delegationParentSelector: '#m_threads',        // 委托事件监听器的父元素
-      itemSelector: '.forumbox > tbody',             // 可点击的容器项 (相对于父元素或全局均可，只要能在父元素内唯一定位)
-      targetLinkSelector: 'a.topic',                 // 容器项内部的目标链接
-      interactiveElementsSelector: 'button, input, select, textarea, [onclick]', // 容器项内忽略跳转的交互元素
-      cssHighlightSelector: '#m_threads .forumbox > tbody' // 用于 CSS 高亮的完整选择器
+      id: 'forumThreads',
+      delegationParentSelector: '#m_threads',
+      itemSelector: '.forumbox > tbody',
+      targetLinkSelector: 'a.topic', // THE link we always want to navigate to
+      // We still need this to identify non-link interactive elements
+      interactiveElementsSelector: 'button, input, select, textarea, [onclick]:not(a)', // Exclude 'a' here
+      cssHighlightSelector: '#m_threads .forumbox > tbody'
     },
     {
       id: 'indexBlocks',
       delegationParentSelector: '#indexBlockLeft',
       itemSelector: '.indexblock',
-      targetLinkSelector: 'a.uitxt3',
-      interactiveElementsSelector: 'button, input, select, textarea, [onclick]',
+      targetLinkSelector: 'a.uitxt3', // THE link we always want to navigate to
+      interactiveElementsSelector: 'button, input, select, textarea, [onclick]:not(a)', // Exclude 'a' here
       cssHighlightSelector: '#indexBlockLeft .indexblock'
     }
-    // 如果有更多区域，可以在这里添加更多配置对象
   ];
 
-  // --- 通用：创建针对特定配置的点击处理函数 ---
-  function createClickHandler(config) {
-    return function handleClick(event) {
-      // `this` 指向附加监听器的 delegationParent
-      const tappedItem = event.target.closest(config.itemSelector);
+  // --- Tap/Scroll Detection State ---
+  let touchStartX, touchStartY, isScrollingOrNonLinkInteractive, touchStartTime;
+  const scrollThreshold = 10;
 
-      // 确保点击发生在目标 item 内，并且该 item 在委托父元素下
-      if (!tappedItem || !this.contains(tappedItem)) {
-        return;
+  // --- 通用：创建针对特定配置的事件处理函数 ---
+  function createTouchHandlers(config) {
+    return {
+      handleTouchStart: function (event) {
+        if (event.touches.length !== 1) {
+          isScrollingOrNonLinkInteractive = true; return;
+        }
+        const tappedItem = event.target.closest(config.itemSelector);
+        if (!tappedItem || !this.contains(tappedItem)) {
+          isScrollingOrNonLinkInteractive = true; return;
+        }
+
+        // --- 重要变更 ---
+        // 检查是否触摸开始于 *非链接* 的交互元素上
+        const touchedNonLinkInteractive = event.target.closest(config.interactiveElementsSelector);
+        if (touchedNonLinkInteractive && tappedItem.contains(touchedNonLinkInteractive)) {
+          // console.log(`[${config.id}] Touch started on non-link interactive element. Allowing default.`);
+          isScrollingOrNonLinkInteractive = true; // 标记为不需要我们处理
+          return;
+        }
+        // 如果触摸开始于普通元素或 *任何* 链接上，我们继续，准备在 touchend 处理
+
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        touchStartTime = Date.now();
+        isScrollingOrNonLinkInteractive = false; // 重置标记
+        // console.log(`[${config.id}] TouchStart potentially valid for tap.`);
+      },
+
+      handleTouchMove: function (event) {
+        if (isScrollingOrNonLinkInteractive || event.touches.length !== 1) return;
+
+        const deltaX = Math.abs(event.touches[0].clientX - touchStartX);
+        const deltaY = Math.abs(event.touches[0].clientY - touchStartY);
+
+        if (deltaX > scrollThreshold || deltaY > scrollThreshold) {
+          // console.log(`[${config.id}] TouchMove detected as scroll.`);
+          isScrollingOrNonLinkInteractive = true;
+        }
+      },
+
+      handleTouchEnd: function (event) {
+        if (isScrollingOrNonLinkInteractive) {
+          // console.log(`[${config.id}] TouchEnd ignored due to scroll or start on non-link interactive.`);
+          isScrollingOrNonLinkInteractive = false; // Reset for next interaction
+          return;
+        }
+
+        const tappedItem = event.target.closest(config.itemSelector);
+        // 需要检查抬起时是否还在 item 内，因为用户可能移出手指
+        if (!tappedItem || !this.contains(tappedItem)) {
+          // console.log(`[${config.id}] TouchEnd outside item.`);
+          isScrollingOrNonLinkInteractive = false; // Reset
+          return;
+        }
+
+        // --- 核心逻辑 ---
+        // 1. 查找我们 *总是* 要导航到的目标链接
+        const targetLink = tappedItem.querySelector(config.targetLinkSelector);
+        if (!targetLink || !targetLink.href) {
+          console.warn(`[${config.id}] Target link selector "${config.targetLinkSelector}" not found or has no href in item:`, tappedItem);
+          isScrollingOrNonLinkInteractive = false; // Reset
+          return;
+        }
+
+        // 2. 检查手指抬起的位置是否在 *任何* <a> 标签上
+        // event.changedTouches[0].target 是 touchend 时手指下的元素
+        const endTarget = event.changedTouches?.[0]?.target || event.target; // Fallback for safety
+        const releasedOnAnyLink = endTarget.closest('a');
+
+        if (releasedOnAnyLink && tappedItem.contains(releasedOnAnyLink)) {
+          // console.log(`[${config.id}] TouchEnd on a link (${releasedOnAnyLink.href}). Preventing its default navigation.`);
+          // 阻止这个被点击链接的默认行为！
+          event.preventDefault();
+        }
+        // 如果抬起时不在任何链接上（例如在背景或其他元素上），则无需 preventDefault
+
+        // 3. 执行到目标链接的导航
+        // console.log(`[${config.id}] Tap confirmed on item. Navigating to TARGET link:`, targetLink.href);
+        window.location.href = targetLink.href;
+
+        // 重置状态
+        isScrollingOrNonLinkInteractive = false;
+        touchStartX = null;
+        touchStartY = null;
+        touchStartTime = null;
+      },
+
+      handleTouchCancel: function (event) {
+        // console.log(`[${config.id}] TouchCancel.`);
+        isScrollingOrNonLinkInteractive = true; // Treat cancel as not a tap
+        touchStartX = null;
+        touchStartY = null;
+        touchStartTime = null;
       }
-
-      const link = tappedItem.querySelector(config.targetLinkSelector);
-      if (!link || !link.href) {
-        // console.log(`[${config.id}] No valid target link found in tapped item:`, tappedItem);
-        return;
-      }
-
-      const clickedInteractiveElement = event.target.closest(config.interactiveElementsSelector);
-      if (clickedInteractiveElement && tappedItem.contains(clickedInteractiveElement)) {
-        // console.log(`[${config.id}] Clicked on an interactive element inside item, allowing default behavior.`);
-        return; // 点击的是内部可交互元素，执行默认行为
-      }
-
-      // 执行跳转
-      // console.log(`[${config.id}] Item background clicked via delegation on ${this.id || this.className}, navigating to:`, link.href);
-      window.location.href = link.href;
     };
   }
 
-  // --- 通用：查找父元素并附加监听器，如果父元素不存在则设置观察器 ---
+  // --- 通用：查找父元素并附加监听器，处理延迟加载 ---
   function setupTapDelegation(config) {
     const parentDataAttribute = `data-tap-delegation-${config.id}-attached`;
 
-    // 尝试附加监听器
-    function attachListener(parentEl) {
+    function attachListeners(parentEl) {
       if (parentEl && !parentEl.hasAttribute(parentDataAttribute)) {
-        console.log(`[${config.id}] Attaching click listener to:`, parentEl);
-        const handler = createClickHandler(config);
-        parentEl.addEventListener('click', handler, false);
-        parentEl.setAttribute(parentDataAttribute, 'true'); // 标记已附加
+        console.log(`[${config.id}] Attaching touch listeners to:`, parentEl);
+        const handlers = createTouchHandlers(config);
+        // touchstart 和 touchmove 保持 passive: true
+        parentEl.addEventListener('touchstart', handlers.handleTouchStart, { passive: true, capture: false });
+        parentEl.addEventListener('touchmove', handlers.handleTouchMove, { passive: true, capture: false });
+        // touchend 必须是 passive: false 因为我们调用了 preventDefault()
+        parentEl.addEventListener('touchend', handlers.handleTouchEnd, { passive: false, capture: false });
+        parentEl.addEventListener('touchcancel', handlers.handleTouchCancel, { passive: true, capture: false });
+        parentEl.setAttribute(parentDataAttribute, 'true');
         return true;
       }
       return false;
     }
 
-    // 1. 尝试立即查找父元素
+    // 初始化和 MutationObserver 逻辑 (保持不变)
     const immediateParent = document.querySelector(config.delegationParentSelector);
-    if (attachListener(immediateParent)) {
-      console.log(`[${config.id}] Tap enhancement initialized immediately.`);
-      return; // 成功找到并附加，完成此配置的初始化
+    if (attachListeners(immediateParent)) {
+      console.log(`[${config.id}] Tap enhancement (Unified Target) initialized immediately.`);
+      return;
     }
 
-    // 2. 如果父元素尚未存在，则使用 MutationObserver 等待它出现
     console.log(`[${config.id}] Delegation parent "${config.delegationParentSelector}" not found. Setting up observer...`);
     const observer = new MutationObserver((mutationsList, obs) => {
-      // 优化：只在添加了节点时检查
       let parentFound = false;
       for (const mutation of mutationsList) {
         if (mutation.addedNodes.length > 0) {
-          // 尝试直接查找父元素，因为添加的节点可能是父元素本身或包含父元素的容器
           const parentInDoc = document.querySelector(config.delegationParentSelector);
           if (parentInDoc && !parentInDoc.hasAttribute(parentDataAttribute)) {
-            // console.log(`[${config.id}] Delegation parent found after mutation:`, parentInDoc);
-            if (attachListener(parentInDoc)) {
+            if (attachListeners(parentInDoc)) {
               parentFound = true;
-              break; // 找到并处理了，跳出内层循环
+              break;
             }
           }
-          // 如果直接查找失败 (例如父元素在 addedNodes 的更深层级)，可以遍历 addedNodes，但效率较低
-          /*
-          for (const node of mutation.addedNodes) {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                  const potentialParent = node.matches(config.delegationParentSelector) ? node : node.querySelector(config.delegationParentSelector);
-                  if (potentialParent && !potentialParent.hasAttribute(parentDataAttribute)) {
-                      // console.log(`[${config.id}] Delegation parent found within added node:`, potentialParent);
-                      if (attachListener(potentialParent)) {
-                          parentFound = true;
-                          break; // 跳出 addedNodes 循环
-                      }
-                  }
-              }
-          }
-          */
         }
-        if (parentFound) break; // 跳出 mutationsList 循环
+        if (parentFound) break;
       }
-
-
       if (parentFound) {
-        obs.disconnect(); // 成功附加监听器后，停止观察
+        obs.disconnect();
         console.log(`[${config.id}] Observer disconnected.`);
       }
     });
 
-    // 开始观察 document.body 的子节点和子树变化
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
+    observer.observe(document.body, { childList: true, subtree: true });
     console.log(`[${config.id}] Observer waiting for delegation parent "${config.delegationParentSelector}"...`);
   }
 
@@ -442,4 +492,5 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   targetsConfig.forEach(config => {
     setupTapDelegation(config);
   });
+
 })();
