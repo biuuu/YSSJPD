@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.5
+// @version     1.6
 // @author      lvlvl
 // ==/UserScript==
 
@@ -48,6 +48,7 @@
 }
 
 .posterInfoLine {
+  margin: 0 !important;
   padding: 0;
   display: flex;
   align-items: center;
@@ -77,6 +78,7 @@
 .block_txt:not(.contentFullWidthButton, .block_txt_c0, .block_txt_c2, .vertmod) {
   min-width: auto !important;
   padding: 0 !important;
+  margin: 0 !important;
   color: #A9A9A9 !important;
   font-size: inherit !important;
   font-weight: normal !important;
@@ -107,7 +109,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   color: inherit !important;
   font-weight: normal !important;
   font-size: inherit !important;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
 .postrow .contentFullWidthButton {
@@ -125,6 +127,12 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .posterInfoLine .userlink {
   color: #efb973 !important;
   font-size: 20px !important;
+  display: inline-block;
+}
+
+.postrow .usercol {
+  padding-top: 10px;
+  display: inline-block;
 }
 
 .postrow .avatar {
@@ -176,7 +184,8 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .posterInfoLine:not(.posterInfoLineB) {
   border-bottom: 1px solid #00000015;
-  padding-bottom: 1em !important;
+  padding: 0 1em 1em 0 !important;
+  line-height: 1;
 }
 
 .postrow .c2 {
@@ -186,7 +195,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .postInfo a.stxt {
   position: absolute;
   right: 1em;
-  top: 1.4em;
+  top: 8px;
   font-size: 20px;
 }
 
@@ -196,7 +205,6 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .c2 .posterInfoLine > .right:first-child + div {
   width: auto !important;
-  height: auto !important;
   margin: 0 !important;
   position: relative;
 }
@@ -209,7 +217,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .postrow .postInfo+span {
-  margin: 1em 0;
+  margin: 1em 0 0 0;
   display: block !important;
 }
 
@@ -254,10 +262,6 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .catenew .togcheck {
   display: none;
-}
-
-#m_threads .forumbox>tbody {
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
 }
 
 #m_threads .forumbox>tbody a.topic {
@@ -313,13 +317,35 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .forumbox .postrow .c2 .subtitle {
-  padding: 0.5em 0;
-  margin: 0;
+  padding: 0.5em 0 0 0;
+  margin: 0.5em 0 0 0;
+  line-height: 1;
   border-top: 1px solid #00000015;
 }
 
 .postcontent .userlink {
   color: #6a6a6a !important
+}
+
+#m_threads .forumbox tbody {
+  position: relative;
+}
+
+#m_threads .forumbox tbody a.topic:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
+}
+
+.comment_c .posterInfoSub .avatar {
+  margin-left: 0 !important;
+}
+
+#sub_forums_c .catenew .b {
+  display: flex;
+  align-items: center;
 }
 
 #m_cate5>.w100>div:first-of-type>a {
@@ -346,185 +372,4 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: none;
 }
 `)
-
-  // --- 配置 ---
-  const targetsConfig = [
-    {
-      id: 'forumThreads',
-      delegationParentSelector: '#m_threads',
-      itemSelector: '.forumbox > tbody',
-      targetLinkSelector: 'a.topic', // THE link we always want to navigate to
-      // We still need this to identify non-link interactive elements
-      interactiveElementsSelector: 'button, input, select, textarea, [onclick]:not(a)', // Exclude 'a' here
-      cssHighlightSelector: '#m_threads .forumbox > tbody'
-    },
-    {
-      id: 'indexBlocks',
-      delegationParentSelector: '#indexBlockLeft',
-      itemSelector: '.indexblock .togcheckblock',
-      targetLinkSelector: 'a.uitxt3', // THE link we always want to navigate to
-      interactiveElementsSelector: 'button, input, select, textarea, [onclick]:not(a)', // Exclude 'a' here
-      cssHighlightSelector: '#indexBlockLeft .indexblock'
-    }
-  ];
-
-  // --- Tap/Scroll Detection State ---
-  let touchStartX, touchStartY, isScrollingOrNonLinkInteractive, touchStartTime;
-  const scrollThreshold = 10;
-
-  // --- 通用：创建针对特定配置的事件处理函数 ---
-  function createTouchHandlers(config) {
-    return {
-      handleTouchStart: function (event) {
-        if (event.touches.length !== 1) {
-          isScrollingOrNonLinkInteractive = true; return;
-        }
-        const tappedItem = event.target.closest(config.itemSelector);
-        if (!tappedItem || !this.contains(tappedItem)) {
-          isScrollingOrNonLinkInteractive = true; return;
-        }
-
-        // --- 重要变更 ---
-        // 检查是否触摸开始于 *非链接* 的交互元素上
-        const touchedNonLinkInteractive = event.target.closest(config.interactiveElementsSelector);
-        if (touchedNonLinkInteractive && tappedItem.contains(touchedNonLinkInteractive)) {
-          // console.log(`[${config.id}] Touch started on non-link interactive element. Allowing default.`);
-          isScrollingOrNonLinkInteractive = true; // 标记为不需要我们处理
-          return;
-        }
-        // 如果触摸开始于普通元素或 *任何* 链接上，我们继续，准备在 touchend 处理
-
-        touchStartX = event.touches[0].clientX;
-        touchStartY = event.touches[0].clientY;
-        touchStartTime = Date.now();
-        isScrollingOrNonLinkInteractive = false; // 重置标记
-        // console.log(`[${config.id}] TouchStart potentially valid for tap.`);
-      },
-
-      handleTouchMove: function (event) {
-        if (isScrollingOrNonLinkInteractive || event.touches.length !== 1) return;
-
-        const deltaX = Math.abs(event.touches[0].clientX - touchStartX);
-        const deltaY = Math.abs(event.touches[0].clientY - touchStartY);
-
-        if (deltaX > scrollThreshold || deltaY > scrollThreshold) {
-          // console.log(`[${config.id}] TouchMove detected as scroll.`);
-          isScrollingOrNonLinkInteractive = true;
-        }
-      },
-
-      handleTouchEnd: function (event) {
-        if (isScrollingOrNonLinkInteractive) {
-          // console.log(`[${config.id}] TouchEnd ignored due to scroll or start on non-link interactive.`);
-          isScrollingOrNonLinkInteractive = false; // Reset for next interaction
-          return;
-        }
-
-        const tappedItem = event.target.closest(config.itemSelector);
-        // 需要检查抬起时是否还在 item 内，因为用户可能移出手指
-        if (!tappedItem || !this.contains(tappedItem)) {
-          // console.log(`[${config.id}] TouchEnd outside item.`);
-          isScrollingOrNonLinkInteractive = false; // Reset
-          return;
-        }
-
-        // --- 核心逻辑 ---
-        // 1. 查找我们 *总是* 要导航到的目标链接
-        const targetLink = tappedItem.querySelector(config.targetLinkSelector);
-        if (!targetLink || !targetLink.href) {
-          console.warn(`[${config.id}] Target link selector "${config.targetLinkSelector}" not found or has no href in item:`, tappedItem);
-          isScrollingOrNonLinkInteractive = false; // Reset
-          return;
-        }
-
-        // 2. 检查手指抬起的位置是否在 *任何* <a> 标签上
-        // event.changedTouches[0].target 是 touchend 时手指下的元素
-        const endTarget = event.changedTouches?.[0]?.target || event.target; // Fallback for safety
-        const releasedOnAnyLink = endTarget.closest('a');
-
-        if (releasedOnAnyLink && tappedItem.contains(releasedOnAnyLink)) {
-          // console.log(`[${config.id}] TouchEnd on a link (${releasedOnAnyLink.href}). Preventing its default navigation.`);
-          // 阻止这个被点击链接的默认行为！
-          event.preventDefault();
-        }
-        // 如果抬起时不在任何链接上（例如在背景或其他元素上），则无需 preventDefault
-
-        // 3. 执行到目标链接的导航
-        // console.log(`[${config.id}] Tap confirmed on item. Navigating to TARGET link:`, targetLink.href);
-        window.location.href = targetLink.href;
-
-        // 重置状态
-        isScrollingOrNonLinkInteractive = false;
-        touchStartX = null;
-        touchStartY = null;
-        touchStartTime = null;
-      },
-
-      handleTouchCancel: function (event) {
-        // console.log(`[${config.id}] TouchCancel.`);
-        isScrollingOrNonLinkInteractive = true; // Treat cancel as not a tap
-        touchStartX = null;
-        touchStartY = null;
-        touchStartTime = null;
-      }
-    };
-  }
-
-  // --- 通用：查找父元素并附加监听器，处理延迟加载 ---
-  function setupTapDelegation(config) {
-    const parentDataAttribute = `data-tap-delegation-${config.id}-attached`;
-
-    function attachListeners(parentEl) {
-      if (parentEl && !parentEl.hasAttribute(parentDataAttribute)) {
-        console.log(`[${config.id}] Attaching touch listeners to:`, parentEl);
-        const handlers = createTouchHandlers(config);
-        // touchstart 和 touchmove 保持 passive: true
-        parentEl.addEventListener('touchstart', handlers.handleTouchStart, { passive: true, capture: false });
-        parentEl.addEventListener('touchmove', handlers.handleTouchMove, { passive: true, capture: false });
-        // touchend 必须是 passive: false 因为我们调用了 preventDefault()
-        parentEl.addEventListener('touchend', handlers.handleTouchEnd, { passive: false, capture: false });
-        parentEl.addEventListener('touchcancel', handlers.handleTouchCancel, { passive: true, capture: false });
-        parentEl.setAttribute(parentDataAttribute, 'true');
-        return true;
-      }
-      return false;
-    }
-
-    // 初始化和 MutationObserver 逻辑 (保持不变)
-    const immediateParent = document.querySelector(config.delegationParentSelector);
-    if (attachListeners(immediateParent)) {
-      console.log(`[${config.id}] Tap enhancement (Unified Target) initialized immediately.`);
-      return;
-    }
-
-    console.log(`[${config.id}] Delegation parent "${config.delegationParentSelector}" not found. Setting up observer...`);
-    const observer = new MutationObserver((mutationsList, obs) => {
-      let parentFound = false;
-      for (const mutation of mutationsList) {
-        if (mutation.addedNodes.length > 0) {
-          const parentInDoc = document.querySelector(config.delegationParentSelector);
-          if (parentInDoc && !parentInDoc.hasAttribute(parentDataAttribute)) {
-            if (attachListeners(parentInDoc)) {
-              parentFound = true;
-              break;
-            }
-          }
-        }
-        if (parentFound) break;
-      }
-      if (parentFound) {
-        obs.disconnect();
-        console.log(`[${config.id}] Observer disconnected.`);
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-    console.log(`[${config.id}] Observer waiting for delegation parent "${config.delegationParentSelector}"...`);
-  }
-
-  // --- 对每个配置执行初始化 ---
-  targetsConfig.forEach(config => {
-    setupTapDelegation(config);
-  });
-
 })();
