@@ -6,7 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
-// @version     1.6
+// @version     1.7
 // @author      lvlvl
 // ==/UserScript==
 
@@ -69,7 +69,7 @@
   margin: 0 !important;
 }
 
-.posterInfoLine .replies {
+.topicrow .posterInfoLine .replies {
   order: 1;
   margin: 0 0 0 1em !important;
 }
@@ -116,8 +116,12 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   margin: 0.5em 0 !important;
 }
 
+.topicrow .posterInfoLine {
+  line-height: 1 !important;
+}
+
 .postrow .posterInfoLine {
-  padding: 0 !important;
+  padding: 0 6px !important;
 }
 
 #mainmenu {
@@ -185,7 +189,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .posterInfoLine:not(.posterInfoLineB) {
   border-bottom: 1px solid #00000015;
   padding: 0 1em 1em 0 !important;
-  line-height: 1;
+  line-height: 1 !important;
 }
 
 .postrow .c2 {
@@ -327,14 +331,17 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   color: #6a6a6a !important
 }
 
-#m_threads .forumbox tbody {
+#m_threads .forumbox tbody td.c2 {
   position: relative;
 }
 
 #m_threads .forumbox tbody a.topic:after {
   content: '';
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   z-index: 1;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.15);
 }
@@ -372,4 +379,6 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: none;
 }
 `)
+
+
 })();
