@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.8
+// @version     1.9
 // @author      lvlvl
 // ==/UserScript==
 
@@ -61,13 +61,17 @@
 }
 
 #m_pbtnbtm .w100 {
-  margin-top: 1em;
+  margin-top: 0.5em;
   display: flex;
   justify-content: space-between;
 }
 
 #m_pbtnbtm .w100 .clear {
   display: none;
+}
+
+#m_pbtnbtm .w100 .left {
+  order: -1;
 }
 
 .forumbox .topicrow .topic {
@@ -396,47 +400,117 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 `)
 
-  // Function to create and append a meta tag
-  function addMetaTag(name, content) {
-    // 检查是否已存在同名 meta 标签，避免重复添加（可选，但推荐）
-    if (document.querySelector(`meta[name="${name}"]`)) {
-      console.log(`Meta tag "${name}" already exists.`);
-      // 可选：如果想强制覆盖，可以先移除旧的
-      // const existingTag = document.querySelector(`meta[name="${name}"]`);
-      // existingTag.parentNode.removeChild(existingTag);
-      // return; // 如果不想覆盖，可以取消注释这行
-    }
+  // --- Configuration ---
+  const parentSelector = '#mc';     // The parent element ID/selector to wait for and delegate from
+  const targetSelector = 'a.topic'; // The target link elements selector within the parent
+  const maxWaitTime = 15000;        // Maximum time (in milliseconds) to wait for the parent element (15 seconds)
+  // --- End Configuration ---
 
-    const meta = document.createElement('meta');
-    meta.setAttribute('name', name);
-    meta.setAttribute('content', content);
-    // 确保 head 存在后再添加
-    if (document.head) {
-      document.head.appendChild(meta);
-      console.log(`Added meta tag: name="${name}", content="${content}"`);
-    } else {
-      // 如果 head 还不存在（理论上 @run-at document-start 时可能），
-      // 尝试监听 DOMContentLoaded，但这会更晚执行
-      document.addEventListener('DOMContentLoaded', () => {
-        if (!document.querySelector(`meta[name="${name}"]`)) { // 再次检查
-          document.head.appendChild(meta);
-          console.log(`Added meta tag (on DOMContentLoaded): name="${name}", content="${content}"`);
-        }
-      });
-    }
+  // Check if it's likely a touch device
+  const isTouchDevice = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
+
+  if (!isTouchDevice) {
+    console.log('Fix iOS Double Tap Script: Not detected as a touch device. Script inactive.');
+    return;
+  }
+  console.log('Fix iOS Double Tap Script: Touch device detected. Attempting to apply fix for all matching links.');
+
+  /**
+   * Attaches the click listener to the found parent element.
+   * @param {Element} parentElement The parent element (#mc) that was found.
+   */
+  function attachClickListener(parentElement) {
+    console.log(`Fix iOS Double Tap Script: Parent element "${parentSelector}" found. Attaching click listener.`);
+
+    parentElement.addEventListener('click', function (event) {
+      // Find the closest ancestor matching the target link selector
+      const linkElement = event.target.closest(targetSelector);
+
+      // Proceed only if a matching link element was clicked and it has an href
+      if (linkElement && linkElement.href) {
+
+        // On touch devices, we assume *any* click on a target link might be
+        // delayed due to potential mouseover/hover interactions designed for desktops.
+        // Therefore, we prevent the default behavior and navigate immediately.
+        console.log(`Fix iOS Double Tap Script: Click intercepted on "${targetSelector}". Forcing navigation to: ${linkElement.href}`);
+
+        // Prevent the default click behavior (which might be delayed/require double tap)
+        event.preventDefault();
+        // Stop the event from bubbling further if needed
+        event.stopPropagation();
+        // Navigate immediately
+        window.location.href = linkElement.href;
+
+      }
+      // If the click wasn't on a target link, do nothing and let it bubble/default.
+    }, false); // Use bubble phase
+
+    console.log(`Fix iOS Double Tap Script: Click listener attached successfully to "${parentSelector}".`);
   }
 
-  // 添加核心的 meta 标签
-  addMetaTag('apple-mobile-web-app-capable', 'yes');
-  addMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent'); // 或 'default', 'black'
-  addMetaTag('apple-mobile-web-app-title', 'NGA玩家社区'); // 可选
+  /**
+   * Waits for an element matching the selector to appear in the DOM.
+   * @param {string} selector CSS selector for the element to wait for.
+   * @param {function} callback Function to execute once the element is found.
+   * @param {number} timeout Max time to wait in milliseconds.
+   */
+  function waitForElement(selector, callback, timeout) {
+    const startTime = Date.now();
 
-  // 添加推荐的 viewport 标签（如果网站还没有的话）
-  // 注意：如果网站已有 viewport，这里的添加可能会冲突或无效，需要判断处理
-  if (!document.querySelector('meta[name="viewport"]')) {
-    addMetaTag('viewport', 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover');
-  } else {
-    console.log("Viewport meta tag already exists.");
-    // 你可能想修改已有的 viewport，但这更复杂，需要解析并修改 content 属性
+    // --- Immediate Check ---
+    const element = document.querySelector(selector);
+    if (element) {
+      callback(element);
+      return; // Found it immediately
+    }
+
+    // --- Setup MutationObserver ---
+    let observer = null;
+    let timeoutId = null;
+
+    const disconnectObserver = () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+        console.log(`Fix iOS Double Tap Script: MutationObserver disconnected for "${selector}".`);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    observer = new MutationObserver((mutations, obs) => {
+      const targetElement = document.querySelector(selector);
+      if (targetElement) {
+        console.log(`Fix iOS Double Tap Script: Element "${selector}" found via MutationObserver.`);
+        disconnectObserver(); // Stop observing once found
+        callback(targetElement); // Execute the callback
+      } else if (Date.now() - startTime > timeout) {
+        // Double check time in case timeout fires slightly before mutation
+        console.warn(`Fix iOS Double Tap Script: Timeout waiting for "${selector}". Element not found after ${timeout}ms.`);
+        disconnectObserver(); // Stop observing on timeout
+      }
+    });
+
+    // --- Start Observing ---
+    observer.observe(document.body || document.documentElement, {
+      childList: true,  // Watch for direct children additions/removals
+      subtree: true     // Watch descendants as well
+    });
+    console.log(`Fix iOS Double Tap Script: Element "${selector}" not found immediately. Started MutationObserver.`);
+
+    // --- Setup Timeout ---
+    timeoutId = setTimeout(() => {
+      if (observer) { // Check if observer still exists
+        console.warn(`Fix iOS Double Tap Script: Timeout waiting for "${selector}". Element not found after ${timeout}ms.`);
+        disconnectObserver(); // Stop observing on timeout
+      }
+    }, timeout);
   }
+
+  // --- Start the process ---
+  // Wait for the parent element and then attach the listener
+  waitForElement(parentSelector, attachClickListener, maxWaitTime);
+
 })();
