@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.9
+// @version     1.10
 // @author      lvlvl
 // ==/UserScript==
 
@@ -60,23 +60,13 @@
   margin: 0 !important;
 }
 
-#m_pbtnbtm .w100 {
-  margin-top: 0.5em;
-  display: flex;
-  justify-content: space-between;
-}
-
-#m_pbtnbtm .w100 .clear {
-  display: none;
-}
-
-#m_pbtnbtm .w100 .left {
-  order: -1;
-}
-
 .forumbox .topicrow .topic {
   font-size: 22px;
   line-height: normal;
+}
+
+#m_threads+#m_pbtnbtm {
+  margin-top: 1em;
 }
 
 .topicrow .author {
@@ -400,117 +390,194 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 `)
 
-  // --- Configuration ---
-  const parentSelector = '#mc';     // The parent element ID/selector to wait for and delegate from
-  const targetSelector = 'a.topic'; // The target link elements selector within the parent
-  const maxWaitTime = 15000;        // Maximum time (in milliseconds) to wait for the parent element (15 seconds)
-  // --- End Configuration ---
+  // --- 配置 ---
+  const parentSelector = '#mc';     // 父元素选择器
+  const targetSelector = 'a.topic'; // 目标链接选择器
+  const maxWaitTime = 15000;        // 等待父元素最大时间 (ms)
+  const MOVE_THRESHOLD = 10;        // 判定为滑动的移动阈值 (像素)
+  const MAX_TAP_TIME = 300;         // Tap 的最大允许时间 (ms)
+  // --- 配置结束 ---
 
-  // Check if it's likely a touch device
+  console.log('修复iOS链接双击脚本 (v1.5 - Tap Simulation): 初始化...');
+
   const isTouchDevice = navigator.maxTouchPoints > 0 || ('ontouchstart' in window);
 
   if (!isTouchDevice) {
-    console.log('Fix iOS Double Tap Script: Not detected as a touch device. Script inactive.');
+    console.log('修复iOS链接双击脚本: 非触摸设备，脚本停止。');
     return;
   }
-  console.log('Fix iOS Double Tap Script: Touch device detected. Attempting to apply fix for all matching links.');
+  console.log('修复iOS链接双击脚本: 触摸设备，尝试应用修复。');
+
+  // --- 用于跟踪触摸状态的变量 ---
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let isPotentialTap = false;
+  let potentialTapTargetLink = null; // 存储 touchstart 时触碰到的链接元素
 
   /**
-   * Attaches the click listener to the found parent element.
-   * @param {Element} parentElement The parent element (#mc) that was found.
+   * 重置触摸状态变量
    */
-  function attachClickListener(parentElement) {
-    console.log(`Fix iOS Double Tap Script: Parent element "${parentSelector}" found. Attaching click listener.`);
-
-    parentElement.addEventListener('click', function (event) {
-      // Find the closest ancestor matching the target link selector
-      const linkElement = event.target.closest(targetSelector);
-
-      // Proceed only if a matching link element was clicked and it has an href
-      if (linkElement && linkElement.href) {
-
-        // On touch devices, we assume *any* click on a target link might be
-        // delayed due to potential mouseover/hover interactions designed for desktops.
-        // Therefore, we prevent the default behavior and navigate immediately.
-        console.log(`Fix iOS Double Tap Script: Click intercepted on "${targetSelector}". Forcing navigation to: ${linkElement.href}`);
-
-        // Prevent the default click behavior (which might be delayed/require double tap)
-        event.preventDefault();
-        // Stop the event from bubbling further if needed
-        event.stopPropagation();
-        // Navigate immediately
-        window.location.href = linkElement.href;
-
-      }
-      // If the click wasn't on a target link, do nothing and let it bubble/default.
-    }, false); // Use bubble phase
-
-    console.log(`Fix iOS Double Tap Script: Click listener attached successfully to "${parentSelector}".`);
+  function resetTouchState() {
+    touchStartX = 0;
+    touchStartY = 0;
+    touchStartTime = 0;
+    isPotentialTap = false;
+    potentialTapTargetLink = null;
+    // console.log('Touch state reset');
   }
 
   /**
-   * Waits for an element matching the selector to appear in the DOM.
-   * @param {string} selector CSS selector for the element to wait for.
-   * @param {function} callback Function to execute once the element is found.
-   * @param {number} timeout Max time to wait in milliseconds.
+   * 附加事件监听器到父元素
+   * @param {Element} parentElement 父元素 (#mc)
+   */
+  function attachTapFixListeners(parentElement) {
+    console.log(`修复iOS链接双击脚本: 父元素 "${parentSelector}" 已找到。附加 Tap 模拟监听器。`);
+
+    // Touch Start
+    parentElement.addEventListener('touchstart', function (event) {
+      // 只处理单指触摸
+      if (event.touches.length !== 1) {
+        resetTouchState(); // 多指触摸，重置状态
+        return;
+      }
+
+      const touch = event.touches[0];
+      potentialTapTargetLink = touch.target.closest(targetSelector); // 查找触碰点下的链接
+
+      // 如果触碰点不在目标链接内，则忽略此次触摸序列
+      if (!potentialTapTargetLink || !potentialTapTargetLink.href) {
+        resetTouchState();
+        return;
+      }
+
+      // 记录起始状态
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = Date.now();
+      isPotentialTap = true; // 假设是 Tap，直到被 touchmove 推翻
+      // console.log('touchstart on potential link:', potentialTapTargetLink.href);
+
+    }, { passive: true }); // touchstart 通常可以 passive，除非需要阻止默认滚动等
+
+    // Touch Move
+    parentElement.addEventListener('touchmove', function (event) {
+      // 如果已经不是 potential tap 或者没有触摸点，则忽略
+      if (!isPotentialTap || event.touches.length === 0) {
+        return;
+      }
+
+      // 如果是多指触摸，也标记为非 Tap (例如缩放手势)
+      if (event.touches.length > 1) {
+        // console.log('touchmove: Multi-touch detected, cancelling tap.');
+        isPotentialTap = false;
+        return;
+      }
+
+      const touch = event.touches[0];
+      const deltaX = Math.abs(touch.clientX - touchStartX);
+      const deltaY = Math.abs(touch.clientY - touchStartY);
+
+      // 如果移动超过阈值，则判定为滑动
+      if (deltaX > MOVE_THRESHOLD || deltaY > MOVE_THRESHOLD) {
+        // console.log('touchmove: Movement threshold exceeded, cancelling tap.');
+        isPotentialTap = false;
+      }
+    }, { passive: true }); // touchmove 通常也应该是 passive，我们只读取坐标，不阻止滚动
+
+    // Touch End
+    parentElement.addEventListener('touchend', function (event) {
+      // 必须是从 potential tap 状态过来，且是单指抬起
+      if (!isPotentialTap || event.changedTouches.length !== 1) {
+        resetTouchState(); // 不满足条件或不是单指抬起，重置
+        return;
+      }
+
+      // 检查结束点是否还在原始链接上 (或者其子元素上)
+      // event.changedTouches[0].target 可能与 touchstart 的 target 不同
+      const touchEndTarget = event.changedTouches[0].target;
+      const currentTargetLink = touchEndTarget.closest(targetSelector);
+
+      // 检查时间是否过长
+      const touchDuration = Date.now() - touchStartTime;
+
+      // 最终检查：是 potential tap，时间短，结束点链接与起始点链接是同一个，且链接有效
+      if (isPotentialTap &&
+        touchDuration < MAX_TAP_TIME &&
+        currentTargetLink &&
+        currentTargetLink === potentialTapTargetLink && // 确保起始和结束是同一个链接元素
+        potentialTapTargetLink.href) {
+        console.log(`修复iOS链接双击脚本: Tap detected on "${targetSelector}". Navigating to: ${potentialTapTargetLink.href}`);
+
+        // 阻止可能触发的 click 事件或默认行为
+        event.preventDefault();
+        // 阻止冒泡
+        event.stopPropagation();
+
+        // 执行跳转
+        window.location.href = potentialTapTargetLink.href;
+
+        // 跳转后也重置状态（虽然页面可能已经跳转，但以防万一）
+        resetTouchState();
+
+      } else {
+        // 如果不满足 Tap 条件，则只重置状态
+        // console.log('touchend: Not a valid tap.', { isPotentialTap, touchDuration, currentTargetLink, potentialTapTargetLink });
+        resetTouchState();
+      }
+    }, { passive: false }); // touchend 需要 non-passive 以便 preventDefault 生效
+
+    // Touch Cancel - 当触摸被系统中断时重置状态
+    parentElement.addEventListener('touchcancel', function (event) {
+      // console.log('touchcancel received.');
+      resetTouchState();
+    }, { passive: true });
+
+    console.log(`修复iOS链接双击脚本: Tap 模拟监听器已成功附加到 "${parentSelector}"。`);
+  }
+
+  /**
+   * 等待元素出现
+   * (waitForElement 函数代码与之前版本相同，此处省略以保持简洁)
+   * ... [waitForElement function code here] ...
    */
   function waitForElement(selector, callback, timeout) {
     const startTime = Date.now();
-
-    // --- Immediate Check ---
     const element = document.querySelector(selector);
     if (element) {
       callback(element);
-      return; // Found it immediately
+      return;
     }
-
-    // --- Setup MutationObserver ---
     let observer = null;
     let timeoutId = null;
-
     const disconnectObserver = () => {
-      if (observer) {
-        observer.disconnect();
-        observer = null;
-        console.log(`Fix iOS Double Tap Script: MutationObserver disconnected for "${selector}".`);
-      }
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
+      if (observer) { observer.disconnect(); observer = null; /* console.log(`Observer disconnected for "${selector}".`); */ }
+      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
     };
-
     observer = new MutationObserver((mutations, obs) => {
       const targetElement = document.querySelector(selector);
       if (targetElement) {
-        console.log(`Fix iOS Double Tap Script: Element "${selector}" found via MutationObserver.`);
-        disconnectObserver(); // Stop observing once found
-        callback(targetElement); // Execute the callback
+        /* console.log(`Element "${selector}" found via MutationObserver.`); */
+        disconnectObserver();
+        callback(targetElement);
       } else if (Date.now() - startTime > timeout) {
-        // Double check time in case timeout fires slightly before mutation
         console.warn(`Fix iOS Double Tap Script: Timeout waiting for "${selector}". Element not found after ${timeout}ms.`);
-        disconnectObserver(); // Stop observing on timeout
+        disconnectObserver();
       }
     });
-
-    // --- Start Observing ---
-    observer.observe(document.body || document.documentElement, {
-      childList: true,  // Watch for direct children additions/removals
-      subtree: true     // Watch descendants as well
-    });
-    console.log(`Fix iOS Double Tap Script: Element "${selector}" not found immediately. Started MutationObserver.`);
-
-    // --- Setup Timeout ---
+    observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    /* console.log(`Element "${selector}" not found immediately. Started MutationObserver.`); */
     timeoutId = setTimeout(() => {
-      if (observer) { // Check if observer still exists
+      if (observer) {
         console.warn(`Fix iOS Double Tap Script: Timeout waiting for "${selector}". Element not found after ${timeout}ms.`);
-        disconnectObserver(); // Stop observing on timeout
+        disconnectObserver();
       }
     }, timeout);
   }
 
-  // --- Start the process ---
-  // Wait for the parent element and then attach the listener
-  waitForElement(parentSelector, attachClickListener, maxWaitTime);
+
+  // --- 开始执行 ---
+  waitForElement(parentSelector, attachTapFixListeners, maxWaitTime);
+
 
 })();
