@@ -6,6 +6,7 @@
 // @match        *://nga.178.com/*
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
+// @run-at      document-start
 // @version     1.7
 // @author      lvlvl
 // ==/UserScript==
@@ -380,5 +381,47 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 `)
 
+  // Function to create and append a meta tag
+  function addMetaTag(name, content) {
+    // 检查是否已存在同名 meta 标签，避免重复添加（可选，但推荐）
+    if (document.querySelector(`meta[name="${name}"]`)) {
+      console.log(`Meta tag "${name}" already exists.`);
+      // 可选：如果想强制覆盖，可以先移除旧的
+      // const existingTag = document.querySelector(`meta[name="${name}"]`);
+      // existingTag.parentNode.removeChild(existingTag);
+      // return; // 如果不想覆盖，可以取消注释这行
+    }
 
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', name);
+    meta.setAttribute('content', content);
+    // 确保 head 存在后再添加
+    if (document.head) {
+      document.head.appendChild(meta);
+      console.log(`Added meta tag: name="${name}", content="${content}"`);
+    } else {
+      // 如果 head 还不存在（理论上 @run-at document-start 时可能），
+      // 尝试监听 DOMContentLoaded，但这会更晚执行
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!document.querySelector(`meta[name="${name}"]`)) { // 再次检查
+          document.head.appendChild(meta);
+          console.log(`Added meta tag (on DOMContentLoaded): name="${name}", content="${content}"`);
+        }
+      });
+    }
+  }
+
+  // 添加核心的 meta 标签
+  addMetaTag('apple-mobile-web-app-capable', 'yes');
+  addMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent'); // 或 'default', 'black'
+  addMetaTag('apple-mobile-web-app-title', 'NGA玩家社区'); // 可选
+
+  // 添加推荐的 viewport 标签（如果网站还没有的话）
+  // 注意：如果网站已有 viewport，这里的添加可能会冲突或无效，需要判断处理
+  if (!document.querySelector('meta[name="viewport"]')) {
+    addMetaTag('viewport', 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover');
+  } else {
+    console.log("Viewport meta tag already exists.");
+    // 你可能想修改已有的 viewport，但这更复杂，需要解析并修改 content 属性
+  }
 })();
