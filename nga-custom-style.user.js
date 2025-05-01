@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.11
+// @version     1.12
 // @author      lvlvl
 // ==/UserScript==
 
@@ -36,6 +36,18 @@
 .contentBlock {
   background: transparent !important;
   border: none;
+}
+
+.postrow.row2 {
+  background-color: #fff9e4;
+}
+
+.postrow {
+  color: #323232;
+}
+
+.catenew, .cateblock, .forumbox {
+  background-color: #fef9e6 !important;
 }
 
 .topicrow .c2 {
@@ -84,7 +96,7 @@
   min-width: auto !important;
   padding: 0 !important;
   margin: 0 !important;
-  color: #A9A9A9 !important;
+  color: #868686 !important;
   font-size: inherit !important;
   font-weight: normal !important;
   background: transparent !important;
@@ -129,6 +141,10 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .posterInfoLine {
   padding: 0 6px !important;
+}
+
+.topicrow .posterInfoLine a {
+  color: #868686 !important;
 }
 
 #mainmenu {
@@ -230,6 +246,10 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   position: absolute;
   left: 10px;
   top: -6px;
+}
+
+.postrow .c2 > .clear {
+  display: none;
 }
 
 .postrow .postInfo+span {
@@ -391,6 +411,24 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: none;
 }
 `)
+
+  function delayStyle() {
+    GM_addStyle(`
+    a {
+      color: #434344;
+    }
+    a:hover {
+      color: #434344;
+    }
+    `)
+  }
+  let win = (window.unsafeWindow || window)
+  if (win.document.readyState != 'loading') {
+    delayStyle()
+  } else {
+    win.addEventListener('DOMContentLoaded', delayStyle)
+  }
+
 
   // --- 配置 ---
   const parentSelector = '#mc';     // 父元素选择器
