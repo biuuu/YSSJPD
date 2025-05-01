@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.10
+// @version     1.11
 // @author      lvlvl
 // ==/UserScript==
 
@@ -88,7 +88,7 @@
   font-size: inherit !important;
   font-weight: normal !important;
   background: transparent !important;
-  font-family: PingFang SC, HarmonyOS_Regular, Helvetica Neue, Microsoft YaHei, sans-serif !important;
+  font-family: inherit !important;
 }
 
 tr:not(.set_topic) .posterInfoLine .replies::after {
@@ -102,6 +102,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .replydate {
   margin-left: auto !important;
+  font-size: inherit !important;
 }
 
 .postrow.row1 {
@@ -123,6 +124,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .topicrow .posterInfoLine {
   line-height: 1 !important;
+  padding: 0 !important;
 }
 
 .postrow .posterInfoLine {
