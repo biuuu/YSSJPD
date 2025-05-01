@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.7
+// @version     1.8
 // @author      lvlvl
 // ==/UserScript==
 
@@ -34,7 +34,7 @@
 .row1 .c2 .posterInfoLine,
 .row1 .c2,
 .contentBlock {
-  background: transparent;
+  background: transparent !important;
   border: none;
 }
 
@@ -56,8 +56,18 @@
   font-size: 18px;
 }
 
-.module_wrap {
-  margin: 0;
+#m_threads {
+  margin: 0 !important;
+}
+
+#m_pbtnbtm .w100 {
+  margin-top: 1em;
+  display: flex;
+  justify-content: space-between;
+}
+
+#m_pbtnbtm .w100 .clear {
+  display: none;
 }
 
 .forumbox .topicrow .topic {
@@ -188,13 +198,18 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .postrow .posterInfoLine:not(.posterInfoLineB) {
-  border-bottom: 1px solid #00000015;
+  border-bottom: 1px solid #00000015 !important;
   padding: 0 1em 1em 0 !important;
   line-height: 1 !important;
 }
 
 .postrow .c2 {
   position: relative;
+}
+
+.forumbox {
+  border-spacing: initial !important;
+  margin: 0 !important;
 }
 
 .postrow .postInfo a.stxt {
