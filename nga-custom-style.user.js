@@ -149,6 +149,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 #mainmenu {
   margin-top: 0 !important;
+  transition: none !important;
 }
 
 .postrow .posterInfoLine .userlink {
@@ -306,27 +307,40 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .indexblock .catenew .cr,
 .indexblock .catenew .c {
-  background-position: 12px 6px !important;
+  background-position: 10px 6px !important;
+  background-size: 54px !important;
+}
+
+.indexblock .catenew .togcheckblock {
+  position: relative;
 }
 
 .indexblock .catenew .a {
-  margin: 0 0 0 58px;
-  height: 52px;
+  margin: 0 0 0 72px;
+  height: 64px;
 }
 
 .indexblock .catenew a {
   white-space: normal;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: normal;
   color: #591804;
   line-height: 1.2;
   text-decoration: none !important;
 }
 
+.indexblock .catenew .togcheckblock a:after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .indexblock .catenew p {
-  padding: 0;
-  line-height: 1;
-  white-space: normal;
+  display: none;
 }
 
 .indexblock .catenew br {
