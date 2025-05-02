@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.12
+// @version     1.14
 // @author      lvlvl
 // ==/UserScript==
 
@@ -15,6 +15,15 @@
   'use strict';
 
   GM_addStyle(`
+html, body {
+  font-size: 20px !important;
+}
+body :not(.a239ga,.forumbox .topicrow .replies) {
+  font-family: PingFang SC, HarmonyOS_Regular, Helvetica Neue, Microsoft YaHei, sans-serif !important;
+}
+.forumbox .postrow .postcontent {
+  font-size: 1.1rem;
+}
 .topic~span,
 .replyer,
 .forumbox .topicrow .postdate,
@@ -26,7 +35,7 @@
 .topicrow .c2 {
   display: flex;
   flex-direction: column-reverse;
-  gap: 1em;
+  gap: 1rem;
 }
 
 .row2 .c2 .posterInfoLine,
@@ -51,12 +60,12 @@
 }
 
 .topicrow .c2 {
-  padding: 1em 1em !important;
+  padding: 1rem 1rem !important;
   border-bottom: 1px solid hsl(0deg 0% 0% / 10%) !important;
 }
 
 .postrow .c2 {
-  padding: 1em 1em 0 1em !important;
+  padding: 1rem 1rem 0 1rem !important;
   border-bottom: 1px solid hsl(0deg 0% 0% / 10%) !important;
 }
 
@@ -65,7 +74,7 @@
   padding: 0;
   display: flex;
   align-items: center;
-  font-size: 18px;
+  font-size: 0.8rem;
 }
 
 #m_threads {
@@ -73,12 +82,12 @@
 }
 
 .forumbox .topicrow .topic {
-  font-size: 22px;
+  font-size: 1.1rem;
   line-height: normal;
 }
 
 #m_threads+#m_pbtnbtm {
-  margin-top: 1em;
+  margin-top: 1rem;
 }
 
 .topicrow .author {
@@ -88,7 +97,7 @@
 
 .topicrow .posterInfoLine .replies {
   order: 1;
-  margin: 0 0 0 1em !important;
+  margin: 0 0 0 1rem !important;
 }
 
 .posterInfoLine .replies,
@@ -105,7 +114,7 @@
 
 tr:not(.set_topic) .posterInfoLine .replies::after {
   content: '回复';
-  margin-left: 4px;
+  margin-left: 0.2rem;
 }
 
 .c2>.replies {
@@ -127,11 +136,11 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   color: inherit !important;
   font-weight: normal !important;
   font-size: inherit !important;
-  margin-top: 2px;
+  margin-top: 0.1rem;
 }
 
 .postrow .contentFullWidthButton {
-  margin: 0.5em 0 !important;
+  margin: 0.5rem 0 !important;
 }
 
 .topicrow .posterInfoLine {
@@ -140,7 +149,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .postrow .posterInfoLine {
-  padding: 0 6px !important;
+  padding: 0 0.3rem !important;
 }
 
 .topicrow .posterInfoLine a {
@@ -154,21 +163,21 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .posterInfoLine .userlink {
   color: #efb973 !important;
-  font-size: 20px !important;
+  font-size: 1rem !important;
   display: inline-block;
 }
 
 .postrow .usercol {
-  padding-top: 10px;
+  padding-top: 0.5rem;
   display: inline-block;
 }
 
 .postrow .avatar {
   box-shadow: none !important;
   border-radius: 50% !important;
-  margin: 0 1em 0 1em !important;
-  width: 4em;
-  height: 4em;
+  margin: 0 1rem 0 1rem !important;
+  width: 4rem;
+  height: 4rem;
   object-fit: cover;
 }
 
@@ -179,7 +188,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .postInfo {
   order: 1;
-  margin: 0.5em 0 !important;
+  margin: 0.5rem 0 !important;
   padding: 0 !important;
 }
 
@@ -190,11 +199,11 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .postrow .posterInfoLine {
-  margin: 0 -1em !important;
+  margin: 0 -1rem !important;
 }
 
 .posterInfoLineB .postbtmb {
-  padding: 0.5em !important;
+  padding: 0.5rem !important;
 }
 
 .posterInfoLineB>.postbtmb:first-child {
@@ -212,7 +221,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .posterInfoLine:not(.posterInfoLineB) {
   border-bottom: 1px solid #00000015 !important;
-  padding: 0 1em 1em 0 !important;
+  padding: 0 1rem 1rem 0 !important;
   line-height: 1 !important;
 }
 
@@ -227,9 +236,9 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .postrow .postInfo a.stxt {
   position: absolute;
-  right: 1em;
-  top: 8px;
-  font-size: 20px;
+  right: 1rem;
+  top: 0.4rem;
+  font-size: 1rem;
 }
 
 .postrow .c2>.postInfo+span>br {
@@ -245,8 +254,8 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 .postrow .c2 .posterInfoLine > .right:first-child + div > .avatar + img {
   margin-left: 0 !important;
   position: absolute;
-  left: 10px;
-  top: -6px;
+  left: 0.5rem;
+  top: -0.3rem;
 }
 
 .postrow .c2 > .clear {
@@ -254,7 +263,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .postrow .postInfo+span {
-  margin: 1em 0 0 0;
+  margin: 1rem 0 0 0;
   display: block !important;
 }
 
@@ -264,11 +273,11 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .forumbox .postrow .postcontent img:not(img[class]) {
   max-width: 100% !important;
-  min-width: 320px !important;
+  min-width: 16rem !important;
 }
 
 .posterInfoLineB+span .postbodysubtitle {
-  margin: 0.5em 0 !important;
+  margin: 0.5rem 0 !important;
 }
 
 .postcontent .quote:first-child {
@@ -281,8 +290,8 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 #m_posts_c .postbox:first-child .postrow .postInfo+span>div:first-child {
   display: block;
-  margin-bottom: 1em;
-  font-size: 22px;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
 }
 
 #m_posts_c .postbox:first-child {
@@ -290,7 +299,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 #m_posts_c .postbox:last-of-type {
-  margin-bottom: 1em !important;
+  margin-bottom: 1rem !important;
 }
 
 #mainmenu>.stdbtn>.innerbg>.right {
@@ -307,8 +316,8 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 
 .indexblock .catenew .cr,
 .indexblock .catenew .c {
-  background-position: 10px 6px !important;
-  background-size: 54px !important;
+  background-position: 0.5rem 0.3rem !important;
+  background-size: 2.7rem !important;
 }
 
 .indexblock .catenew .togcheckblock {
@@ -316,13 +325,13 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .indexblock .catenew .a {
-  margin: 0 0 0 72px;
-  height: 64px;
+  margin: 0 0 0 3.6rem;
+  height: 3.2rem;
 }
 
 .indexblock .catenew a {
   white-space: normal;
-  font-size: 16px;
+  font-size: 0.8rem;
   font-weight: normal;
   color: #591804;
   line-height: 1.2;
@@ -355,9 +364,9 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: 0.25rem;
   height: 100%;
-  padding-right: 8px;
+  padding-right: 0.4rem;
   box-sizing: border-box;
 }
 
@@ -367,8 +376,8 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
 }
 
 .forumbox .postrow .c2 .subtitle {
-  padding: 0.5em 0 0 0;
-  margin: 0.5em 0 0 0;
+  padding: 0.5rem 0 0 0;
+  margin: 0.5rem 0 0 0;
   line-height: 1;
   border-top: 1px solid #00000015;
 }
@@ -433,6 +442,7 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
     }
     a:hover {
       color: #434344;
+      text-decoration: none;
     }
     `)
   }
