@@ -7,7 +7,7 @@
 // @match        *://bbs.nga.cn/*
 // @grant       GM_addStyle
 // @run-at      document-start
-// @version     1.15
+// @version     1.16
 // @author      lvlvl
 // ==/UserScript==
 
@@ -415,6 +415,10 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   align-items: center;
 }
 
+.forumbox .postrow .postcontent img:not(img[class]) {
+  margin-right: 0 !important;
+}
+
 #m_cate5>.w100>div:first-of-type>a {
   display: none !important;
 }
@@ -648,5 +652,109 @@ tr:not(.set_topic) .posterInfoLine .replies::after {
   // --- 开始执行 ---
   waitForElement(parentSelector, attachTapFixListeners, maxWaitTime);
 
+
+  console.log('PhotoSwipe Dynamic Module Injector: Script running...');
+
+  // --- Configuration ---
+  const gallerySelector = '#mc'; // The selector for your gallery container
+  const childrenSelector = '.postcontent img[data-usethumb]';         // The selector for items within the gallery
+  const photoswipeCssUrl = 'https://unpkg.com/photoswipe@5/dist/photoswipe.css';
+  const lightboxModuleUrl = 'https://unpkg.com/photoswipe@5/dist/photoswipe-lightbox.esm.js';
+  const photoswipeModuleUrl = 'https://unpkg.com/photoswipe@5/dist/photoswipe.esm.js';
+  // --- End Configuration ---
+
+  // 1. Inject the CSS dynamically
+  function addCssLink(url) {
+      // Check if CSS is already added (optional, prevents duplicates if script runs multiple times)
+      if (document.querySelector(`link[href="${url}"]`)) {
+          console.log('PhotoSwipe Dynamic Module Injector: CSS link already exists.');
+          return;
+      }
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = url;
+      // Append to head, or documentElement if head doesn't exist yet (unlikely with document-idle)
+      (document.head || document.documentElement).appendChild(link);
+      console.log('PhotoSwipe Dynamic Module Injector: CSS link added.');
+  }
+
+  addCssLink(photoswipeCssUrl);
+
+  // 2. Prepare the JavaScript module code as a string
+  //    We use template literals (backticks ``) for easier multi-line string definition.
+  //    We also add a check inside the module to ensure the gallery element exists before initializing.
+  const moduleScriptContent = `
+      import PhotoSwipeLightbox from '${lightboxModuleUrl}';
+      // The pswpModule now needs the actual PhotoSwipe module, so we import it too
+      // Note: The original '() => import()' syntax is for lazy-loading,
+      //       but since we are in a module script already, we can import directly.
+      //       If PhotoSwipe itself is large and you want to truly lazy load it,
+      //       the original syntax inside the module would still work.
+      import PhotoSwipe from '${photoswipeModuleUrl}';
+
+      console.log('PhotoSwipe Module: Script loaded.');
+
+      // Function to initialize PhotoSwipe, checks for gallery element first
+      function initPhotoSwipeWhenReady() {
+          const galleryElement = document.querySelector('${gallerySelector}');
+          if (galleryElement) {
+              console.log('PhotoSwipe Module: Found gallery "${gallerySelector}", initializing lightbox...');
+              try {
+                  const lightbox = new PhotoSwipeLightbox({
+                    gallery: '${gallerySelector}',
+                    children: '${childrenSelector}',
+                    // Pass the imported PhotoSwipe class constructor
+                    pswpModule: PhotoSwipe
+                  });
+
+                  lightbox.addFilter('domItemData', (itemData, element, linkEl) => {
+                    if (element) {
+                      let src = element.dataset.srcorg || element.dataset.usethumb || element.src
+
+                      itemData.src = src;
+                      itemData.w = element.naturalWidth || element.dataset.nw || element.width;
+                      itemData.h = element.naturalHeight || element.dataset.nh || element.height;
+                      itemData.msrc = element.dataset.usethumb;
+                      itemData.thumbCropped = true;
+                    }
+
+                    return itemData;
+                  });
+                  lightbox.init();
+                  console.log('PhotoSwipe Module: Lightbox initialized successfully.');
+              } catch (error) {
+                  console.error('PhotoSwipe Module: Error during lightbox initialization:', error);
+              }
+          } else {
+              // Element not found yet, wait and retry.
+              // This is a simple polling mechanism. For complex dynamic pages,
+              // a MutationObserver within the userscript wrapper might be more robust
+              // before injecting this module script.
+              console.warn('PhotoSwipe Module: Gallery element "${gallerySelector}" not found. Retrying in 500ms...');
+              setTimeout(initPhotoSwipeWhenReady, 500);
+          }
+      }
+
+      // Start the initialization process
+      // We might need to wait for DOMContentLoaded just in case, although 'run-at document-idle' helps.
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initPhotoSwipeWhenReady);
+      } else {
+          // DOM is already ready or interactive/complete
+          initPhotoSwipeWhenReady();
+      }
+  `;
+
+  // 3. Create a <script type="module"> element
+  const scriptElement = document.createElement('script');
+  scriptElement.type = 'module';
+  // Use textContent to set the script's code
+  scriptElement.textContent = moduleScriptContent;
+
+  // 4. Append the script element to the <head> or <body>
+  //    Appending to head is common practice for modules.
+  (document.head || document.documentElement).appendChild(scriptElement);
+  console.log('PhotoSwipe Dynamic Module Injector: Module script tag added to the page.');
 
 })();
